@@ -1,5 +1,5 @@
 # Use the official Bun image
-FROM oven/bun:1.1 AS base
+FROM oven/bun:latest AS base
 WORKDIR /app
 
 # Install dependencies
@@ -10,7 +10,7 @@ RUN bun install --frozen-lockfile
 COPY . .
 
 # Multi-stage build for a smaller production image
-FROM oven/bun:1.1-slim AS release
+FROM oven/bun:latest AS release
 WORKDIR /app
 COPY --from=base /app /app
 
