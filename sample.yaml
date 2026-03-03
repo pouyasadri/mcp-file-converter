@@ -1,0 +1,7 @@
+name: Test Project
+version: 1.0.0
+features:
+  - conversion
+  - mcp
+  - bun
+active: true

@@ -1,0 +1,23 @@
+{
+  "name": "file-converter-mcp",
+  "module": "src/index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "bun run src/index.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.27.1",
+    "csv-parse": "^6.1.0",
+    "csv-stringify": "^6.6.0",
+    "sharp": "^0.34.5",
+    "yaml": "^2.8.2",
+    "zod": "^4.3.6"
+  }
+}
