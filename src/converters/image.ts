@@ -11,6 +11,17 @@ export const ImageConversionOptionsSchema = z.object({
 
 export type ImageConversionOptions = z.infer<typeof ImageConversionOptionsSchema>;
 
+type FormatHandler = (img: sharp.Sharp, options: ImageConversionOptions) => sharp.Sharp;
+
+const formatHandlers: Record<string, FormatHandler> = {
+  ".jpg": (img, opts) => img.jpeg({ quality: opts.quality }),
+  ".jpeg": (img, opts) => img.jpeg({ quality: opts.quality }),
+  ".png": (img, opts) => img.png({ quality: opts.quality }),
+  ".webp": (img, opts) => img.webp({ quality: opts.quality }),
+  ".avif": (img, opts) => img.avif({ quality: opts.quality }),
+  ".tiff": (img, opts) => img.tiff({ quality: opts.quality }),
+};
+
 export async function convertImage(
   inputBuffer: Buffer,
   targetExt: string,
@@ -38,21 +49,10 @@ export async function convertImage(
     });
   }
 
-  const quality = parsedOptions.quality;
-
-  switch (targetExt.toLowerCase()) {
-    case ".jpg":
-    case ".jpeg":
-      return await image.jpeg({ quality }).toBuffer();
-    case ".png":
-      return await image.png({ quality }).toBuffer();
-    case ".webp":
-      return await image.webp({ quality }).toBuffer();
-    case ".avif":
-      return await image.avif({ quality }).toBuffer();
-    case ".tiff":
-      return await image.tiff({ quality }).toBuffer();
-    default:
-      throw new Error(`Unsupported image target extension: ${targetExt}`);
+  const handler = formatHandlers[targetExt.toLowerCase()];
+  if (!handler) {
+    throw new Error(`Unsupported image target extension: ${targetExt}`);
   }
+
+  return await handler(image, parsedOptions).toBuffer();
 }
