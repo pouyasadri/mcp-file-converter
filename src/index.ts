@@ -30,13 +30,16 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
     tools: [
       {
         name: "convert_file",
-        description: "Convert a file to another format (Images or Data files like JSON/CSV/YAML)",
+        description: "Convert a file to another format (Images or Data files like JSON/CSV/YAML). Supports advanced optional arguments for Images (width, height, quality).",
         inputSchema: {
           type: "object",
           properties: {
             inputPath: { type: "string", description: "Absolute path to the source file" },
             targetExtension: { type: "string", description: "Target extension (e.g., '.jpg', '.png', '.csv', '.json', '.yaml')" },
             overwrite: { type: "boolean", description: "Whether to overwrite the original file or create a copy" },
+            width: { type: "integer", description: "Optional image width resize boundary" },
+            height: { type: "integer", description: "Optional image height resize boundary" },
+            quality: { type: "integer", description: "Optional image output quality (1-100)" },
           },
           required: ["inputPath", "targetExtension"],
         },
@@ -51,10 +54,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   }
 
   try {
-    const { inputPath, targetExtension, overwrite } = ConvertFileSchema.parse(request.params.arguments);
+    const { inputPath, targetExtension, overwrite, width, height, quality } = ConvertFileSchema.parse(request.params.arguments);
     const sourceExt = extname(inputPath);
     const normalizedTargetExt = targetExtension.startsWith(".") ? targetExtension : `.${targetExtension}`;
-    
+
     if (sourceExt.toLowerCase() === normalizedTargetExt.toLowerCase()) {
       return {
         content: [{ type: "text", text: "Source and target extensions are the same. No conversion needed." }],
@@ -68,7 +71,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const isData = DATA_EXTENSIONS.includes(sourceExt.toLowerCase());
 
     if (isImage) {
-      outputData = await convertImage(inputBuffer, normalizedTargetExt);
+      outputData = await convertImage(inputBuffer, normalizedTargetExt, { width, height, quality });
     } else if (isData) {
       outputData = await convertData(inputBuffer, sourceExt, normalizedTargetExt);
     } else {
@@ -77,9 +80,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
     let outputPath = inputPath;
     const fileName = basename(inputPath, sourceExt);
-    
+
     if (!overwrite || (overwrite && sourceExt !== normalizedTargetExt)) {
-       outputPath = join(dirname(inputPath), `${fileName}${normalizedTargetExt}`);
+      outputPath = join(dirname(inputPath), `${fileName}${normalizedTargetExt}`);
     }
 
     await writeFile(outputPath, outputData);
