@@ -41,7 +41,7 @@ describe("Data Converter", () => {
     test("should convert YAML to JSON correctly", async () => {
         const result = await convertData(yamlBuffer, ".yaml", ".json");
         // Output might have different whitespace because of stringify depth, but parsing it should match
-        const parsedResult = JSON.parse(result);
+        const parsedResult = JSON.parse(result as string);
         expect(parsedResult).toHaveLength(2);
         expect(parsedResult[0].name).toBe("Alice");
     });
@@ -55,7 +55,7 @@ describe("Data Converter", () => {
 
     test("should convert CSV to JSON correctly", async () => {
         const result = await convertData(csvBuffer, ".csv", ".json");
-        const parsedResult = JSON.parse(result);
+        const parsedResult = JSON.parse(result as string);
         // csv-parse defaults to returning everything as strings
         expect(parsedResult[0].id).toBe("1");
         expect(parsedResult[0].name).toBe("Alice");
@@ -80,5 +80,23 @@ describe("Data Converter", () => {
         expect(
             convertData(badJsonBuffer, ".json", ".yaml")
         ).rejects.toThrow(/Failed to parse .json file:/);
+    });
+
+    // --- Markdown / HTML Tests ---
+
+    test("should convert Markdown to HTML correctly", async () => {
+        const md = `# Hello\n\nThis is a **paragraph**.`;
+        const mdBuffer = Buffer.from(md, "utf-8");
+        const result = await convertData(mdBuffer, ".md", ".html");
+        expect(result).toContain("<h1>Hello</h1>");
+        expect(result).toContain("<strong>paragraph</strong>");
+    });
+
+    test("should convert HTML to Markdown correctly", async () => {
+        const html = `<h1>Hello</h1><p>This is a <strong>paragraph</strong>.</p>`;
+        const htmlBuffer = Buffer.from(html, "utf-8");
+        const result = await convertData(htmlBuffer, ".html", ".md");
+        expect(result).toContain("# Hello");
+        expect(result).toContain("**paragraph**");
     });
 });

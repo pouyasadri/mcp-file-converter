@@ -1,18 +1,22 @@
-# Use the official Bun image
+# ── Stage 1: Install all deps (including dev) and type-check ──────────────────
 FROM oven/bun:latest AS base
 WORKDIR /app
-
-# Install dependencies
 COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile
-
-# Copy source code
 COPY . .
 
-# Multi-stage build for a smaller production image
+# ── Stage 2: Lean production image ────────────────────────────────────────────
 FROM oven/bun:latest AS release
 WORKDIR /app
-COPY --from=base /app /app
 
-# The MCP server communicates over stdio, so we just run the index file
+# Copy only the files needed at runtime
+COPY package.json bun.lock ./
+
+# Install production dependencies only — excludes devDependencies
+RUN bun install --frozen-lockfile --production
+
+# Copy compiled source (Bun runs TypeScript directly, no build step needed)
+COPY --from=base /app/src ./src
+
+# The MCP server communicates over stdio
 ENTRYPOINT ["bun", "run", "src/index.ts"]

@@ -14,10 +14,14 @@ Powered by **Sharp**, supporting high-quality transformations between:
 - **Formats**: PNG, JPG, WebP, AVIF, TIFF.
 - **Auto-optimization**: Intelligent defaults for web-ready assets.
 
-### 📊 Data Transformation
-Effortless switching between common data structures:
-- **JSON ↔️ YAML ↔️ CSV**
+### 📊 Data & Markup Transformation
+Effortless switching between common data and markup structures:
+- **JSON ↔️ YAML ↔️ CSV ↔️ XLSX (Excel)**
+- **Markdown ↔️ HTML**
 - Preserves structure and types during conversion.
+
+### 📄 PDF Document Parsing
+- **PDF Text Extraction:** Easily read the plain-text content inside any PDF.
 
 ## 🚀 Quick Start
 

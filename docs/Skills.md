@@ -14,8 +14,13 @@ Native support for common configuration and data formats:
 - **JSON:** Standard data exchange format.
 - **YAML/YML:** Human-readable configuration format.
 - **CSV:** Tabular data with automatic header parsing.
+- **XLSX:** Excel spreadsheet reading and writing.
 
-### 3. File System Management
+### 3. Document Processing
+- **PDF Text Extraction:** Reads raw text from PDF documents.
+- **Markup Conversion:** Markdown `↔` HTML bi-directional conversion.
+
+### 4. File System Management
 - **Surgical Overwrites:** Replace existing files precisely when requested.
 - **Safe Copies:** Create new files in the same directory without disturbing the source.
 - **Path Resolution:** Handles absolute paths and resolves extensions automatically.
