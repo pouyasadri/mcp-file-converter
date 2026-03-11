@@ -65,14 +65,14 @@ describe("Data Converter", () => {
 
     test("should throw on unsupported source extension", async () => {
         expect(
-            convertData(jsonBuffer, ".xml", ".json")
-        ).rejects.toThrow("Unsupported source data extension: .xml");
+            convertData(jsonBuffer, ".xyz", ".json")
+        ).rejects.toThrow("Unsupported source data extension: .xyz");
     });
 
     test("should throw on unsupported target extension", async () => {
         expect(
-            convertData(jsonBuffer, ".json", ".xml")
-        ).rejects.toThrow("Unsupported target data extension: .xml");
+            convertData(jsonBuffer, ".json", ".xyz")
+        ).rejects.toThrow("Unsupported target data extension: .xyz");
     });
 
     test("should throw a clean error message for malformed JSON parsing", async () => {
@@ -98,5 +98,43 @@ describe("Data Converter", () => {
         const result = await convertData(htmlBuffer, ".html", ".md");
         expect(result).toContain("# Hello");
         expect(result).toContain("**paragraph**");
+    });
+
+    // --- TOML Tests ---
+
+    test("should convert JSON to TOML correctly", async () => {
+        const json = JSON.stringify({ name: "Alice", age: 30 });
+        const buf = Buffer.from(json, "utf-8");
+        const result = await convertData(buf, ".json", ".toml");
+        expect(result).toContain("name");
+        expect(result).toContain("Alice");
+    });
+
+    test("should convert TOML to JSON correctly", async () => {
+        const toml = `name = "Alice"\nage = 30\n`;
+        const buf = Buffer.from(toml, "utf-8");
+        const result = await convertData(buf, ".toml", ".json");
+        const parsed = JSON.parse(result as string);
+        expect(parsed.name).toBe("Alice");
+        expect(parsed.age).toBe(30);
+    });
+
+    // --- XML Tests ---
+
+    test("should convert JSON to XML correctly", async () => {
+        const json = JSON.stringify({ name: "Alice", city: "Paris" });
+        const buf = Buffer.from(json, "utf-8");
+        const result = await convertData(buf, ".json", ".xml");
+        expect(result).toContain("Alice");
+        expect(result).toContain("Paris");
+    });
+
+    test("should convert XML to JSON correctly", async () => {
+        const xml = `<root><name>Alice</name><city>Paris</city></root>`;
+        const buf = Buffer.from(xml, "utf-8");
+        const result = await convertData(buf, ".xml", ".json");
+        const parsed = JSON.parse(result as string);
+        // fast-xml-parser wraps the root element — check nested structure
+        expect(JSON.stringify(parsed)).toContain("Alice");
     });
 });

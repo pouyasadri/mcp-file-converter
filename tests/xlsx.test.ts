@@ -66,7 +66,7 @@ describe("XLSX Converter", () => {
     test("should throw on unsupported target extension from XLSX source", async () => {
         const xlsxBuffer = makeXlsxBuffer(sampleRows);
         expect(
-            convertData(xlsxBuffer, ".xlsx", ".xml")
-        ).rejects.toThrow("Unsupported target data extension: .xml");
+            convertData(xlsxBuffer, ".xlsx", ".xyz")
+        ).rejects.toThrow("Unsupported target data extension: .xyz");
     });
 });

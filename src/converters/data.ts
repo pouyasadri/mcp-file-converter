@@ -4,6 +4,8 @@ import YAML from "yaml";
 import { marked } from "marked";
 import TurndownService from "turndown";
 import * as XLSX from "xlsx";
+import * as TOML from "smol-toml";
+import { XMLParser, XMLBuilder } from "fast-xml-parser";
 
 // Canonical type for parsed structured data across all supported formats
 type ParsedData = Record<string, unknown>[] | Record<string, unknown>;
@@ -31,6 +33,13 @@ const parsers: Record<string, DataParser> = {
     if (!ws) throw new Error("Could not read the first sheet from XLSX file.");
     return XLSX.utils.sheet_to_json<Record<string, unknown>>(ws);
   },
+  // TOML — human-readable config format popular in Rust/Python ecosystems
+  ".toml": (content) => TOML.parse(content as string) as ParsedData,
+  // XML — parsed to a JS object; ignoreAttributes=false preserves XML attributes
+  ".xml": (content) => {
+    const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: "@_" });
+    return parser.parse(content as string) as ParsedData;
+  },
 };
 
 const turndown = new TurndownService({ headingStyle: "atx" });
@@ -54,6 +63,15 @@ const stringifiers: Record<string, DataStringifier> = {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
     return Buffer.from(XLSX.write(wb, { type: "buffer", bookType: "xlsx" }) as Uint8Array);
+  },
+  // TOML output
+  ".toml": (data) => TOML.stringify(data as Record<string, unknown>),
+  // XML output
+  ".xml": (data) => {
+    const builder = new XMLBuilder({ ignoreAttributes: false, attributeNamePrefix: "@_", format: true });
+    // Wrap arrays in a root element since XML requires a single root
+    const payload = Array.isArray(data) ? { items: { item: data } } : data;
+    return builder.build(payload) as string;
   },
 };
 
