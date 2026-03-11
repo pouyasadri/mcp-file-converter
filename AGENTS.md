@@ -8,9 +8,10 @@ repository. Follow these guidelines to keep code consistent and correct.
 ## Project Overview
 
 `file-converter-mcp` is a Model Context Protocol (MCP) server for file format conversion.
-It exposes a single `convert_file` tool that converts images (PNG/JPG/WebP/AVIF/TIFF) and
-data files (JSON/YAML/CSV). The server communicates over **stdio** and is designed to run
-locally via Bun or inside Docker.
+It exposes multiple tools for converting images (PNG/JPG/WebP/AVIF/TIFF), data files 
+(JSON/YAML/CSV/XLSX/TOML/XML), and markup (MD/HTML), as well as utility tools for 
+inspection, batch conversion, and compression. The server communicates over **stdio** 
+and is designed to run locally via Bun or inside Docker.
 
 - **Runtime:** Bun (not Node.js — do not use `node` or `ts-node`)
 - **Language:** TypeScript 5, ESNext, ESM modules
@@ -71,11 +72,11 @@ configured ESLint or Prettier; do not add linting scripts without discussing it 
 src/
   index.ts          # MCP server definition — registers tools and handles requests
   converters/
-    data.ts         # convertData() — JSON/YAML/CSV bi-directional conversion
+    data.ts         # convertData() — JSON/YAML/CSV/XLSX/TOML/XML/MD/HTML conversion
     image.ts        # convertImage() — image format conversion via Sharp
   types/
     index.ts        # Zod schemas and inferred TypeScript types (source of truth)
-  tools/            # Reserved for future tool modules (currently empty)
+  tools/            # Domain-specific tools (PDF, Batch, Inspect, Compress)
 tests/
   basic.test.ts     # Environment/utility sanity checks
   data.test.ts      # Unit tests for convertData()
@@ -105,10 +106,10 @@ docs/
 ## Code Style
 
 ### Imports
-- Use the `node:` protocol prefix for all Node/Bun built-ins:
+- Direct imports for Node/Bun built-ins (no `node:` protocol prefix required):
   ```typescript
-  import { readFile, writeFile } from "node:fs/promises";
-  import { extname, join, dirname, basename } from "node:path";
+  import { readFile, writeFile } from "fs/promises";
+  import { extname, join, dirname, basename } from "path";
   ```
 - Use explicit `.js` extensions for `@modelcontextprotocol/sdk` imports (required for ESM
   bundler resolution):
@@ -215,11 +216,9 @@ docs/
 - File access in Docker runs inside `/data` — always handle absolute paths and never
   hard-code host paths.
 - Always verify the source file exists before attempting conversion (see `src/index.ts`
-  handler for the pattern).
-- Security: image converters enforce a `MAX_IMAGE_DIMENSION` guard (16384px) to prevent
-  image-bomb attacks — preserve this guard in all image-related changes.
-- The `src/tools/` directory is reserved for future tool module extraction. Place new MCP
-  tools there when the server gains additional capabilities.
+  `assertFileExists` helper).
+- Security: image converters enforce a `MAX_IMAGE_DIMENSION` guard (16384px).
+- Modular Tools: Place new specialized logic in `src/tools/` and register in `src/index.ts`.
 
 ### File Conversion Specialist Guidelines
 

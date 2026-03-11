@@ -16,12 +16,16 @@ Powered by **Sharp**, supporting high-quality transformations between:
 
 ### 📊 Data & Markup Transformation
 Effortless switching between common data and markup structures:
-- **JSON ↔️ YAML ↔️ CSV ↔️ XLSX (Excel)**
+- **JSON ↔️ YAML ↔️ CSV ↔️ XLSX (Excel) ↔️ TOML ↔️ XML**
 - **Markdown ↔️ HTML**
 - Preserves structure and types during conversion.
 
-### 📄 PDF Document Parsing
-- **PDF Text Extraction:** Easily read the plain-text content inside any PDF.
+### 🛠️ Utilities & Archiving
+Advanced tools for file management:
+- **Batch Conversion:** Process entire folders/lists in parallel.
+- **File Inspection:** Instant metadata (dimensions, row counts, etc.).
+- **Gzip & Zip**: Native compression/decompression.
+- **PDF Text Extraction:** Read plain-text from PDFs.
 
 ## 🚀 Quick Start
 
@@ -83,11 +87,6 @@ Add this to your `claude_desktop_config.json`:
 Run the test suite using Bun's native test runner:
 ```bash
 bun test
-```
-
-For manual testing of the conversion logic:
-```bash
-bun run test-conversion.ts
 ```
 
 ## 📦 CI/CD & Deployment
