@@ -4,8 +4,8 @@ import YAML from "yaml";
 import * as TOML from "smol-toml";
 import * as XLSX from "xlsx";
 import { XMLParser } from "fast-xml-parser";
-import { readFile } from "node:fs/promises";
-import { extname } from "node:path";
+import { readFile } from "fs/promises";
+import { extname } from "path";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -40,9 +40,9 @@ export type FileMetadata = ImageMetadata | DataMetadata | MarkupMetadata;
 
 // ── Extension sets ────────────────────────────────────────────────────────────
 
-const IMAGE_EXTS  = new Set([".jpg", ".jpeg", ".png", ".webp", ".avif", ".tiff"]);
+const IMAGE_EXTS = new Set([".jpg", ".jpeg", ".png", ".webp", ".avif", ".tiff"]);
 const MARKUP_EXTS = new Set([".md", ".html"]);
-const DATA_EXTS   = new Set([".json", ".yaml", ".yml", ".csv", ".xlsx", ".toml", ".xml"]);
+const DATA_EXTS = new Set([".json", ".yaml", ".yml", ".csv", ".xlsx", ".toml", ".xml"]);
 
 // ── Internal helper: parse text-based data files into row arrays ──────────────
 
@@ -92,13 +92,13 @@ export async function inspectFile(inputPath: string): Promise<FileMetadata> {
   if (IMAGE_EXTS.has(ext)) {
     const meta = await sharp(inputBuffer).metadata();
     return {
-      type:       "image",
-      format:     meta.format,
-      width:      meta.width,
-      height:     meta.height,
-      channels:   meta.channels,
+      type: "image",
+      format: meta.format,
+      width: meta.width,
+      height: meta.height,
+      channels: meta.channels,
       colorSpace: meta.space,
-      hasAlpha:   meta.hasAlpha,
+      hasAlpha: meta.hasAlpha,
       sizeBytes,
     };
   }
@@ -107,10 +107,10 @@ export async function inspectFile(inputPath: string): Promise<FileMetadata> {
   if (MARKUP_EXTS.has(ext)) {
     const text = inputBuffer.toString("utf-8");
     return {
-      type:           "markup",
-      format:         ext.replace(".", ""),
+      type: "markup",
+      format: ext.replace(".", ""),
       characterCount: text.length,
-      lineCount:      text.split("\n").length,
+      lineCount: text.split("\n").length,
       sizeBytes,
     };
   }
@@ -138,8 +138,8 @@ export async function inspectFile(inputPath: string): Promise<FileMetadata> {
     }
     const columns = rows.length > 0 ? Object.keys(rows[0] ?? {}) : [];
     return {
-      type:     "data",
-      format:   ext.replace(".", ""),
+      type: "data",
+      format: ext.replace(".", ""),
       rowCount: rows.length,
       columns,
       sizeBytes,

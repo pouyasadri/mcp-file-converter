@@ -1,8 +1,8 @@
 import { describe, test, expect } from "bun:test";
 import sharp from "sharp";
 import { batchConvert } from "../src/tools/batch";
-import { writeFile, unlink, readFile } from "node:fs/promises";
-import { join } from "node:path";
+import { writeFile, unlink, readFile } from "fs/promises";
+import { join } from "path";
 
 const TMP = "/tmp";
 

@@ -1,8 +1,8 @@
 import { describe, test, expect } from "bun:test";
 import { compressFile, decompressFile } from "../src/tools/compress";
-import { writeFile, readFile, unlink, rm } from "node:fs/promises";
-import { join } from "node:path";
-import { existsSync } from "node:fs";
+import { writeFile, readFile, unlink, rm } from "fs/promises";
+import { join } from "path";
+import { existsSync } from "fs";
 
 const TMP = "/tmp";
 

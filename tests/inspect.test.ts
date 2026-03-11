@@ -2,8 +2,8 @@ import { describe, test, expect } from "bun:test";
 import sharp from "sharp";
 import * as XLSX from "xlsx";
 import { inspectFile } from "../src/tools/inspect";
-import { writeFile, unlink } from "node:fs/promises";
-import { join } from "node:path";
+import { writeFile, unlink } from "fs/promises";
+import { join } from "path";
 
 const TMP = "/tmp";
 

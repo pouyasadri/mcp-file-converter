@@ -1,5 +1,5 @@
-import { readFile, writeFile, access } from "node:fs/promises";
-import { extname, join, dirname, basename } from "node:path";
+import { readFile, writeFile, access } from "fs/promises";
+import { extname, join, dirname, basename } from "path";
 import { convertImage } from "../converters/image.js";
 import { convertData } from "../converters/data.js";
 import type { BatchConvertArgs } from "../types/index.js";
@@ -23,7 +23,7 @@ export interface BatchConvertResult {
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const IMAGE_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".webp", ".avif", ".tiff"]);
-const DATA_EXTENSIONS  = new Set([".json", ".yaml", ".yml", ".csv", ".md", ".html", ".xlsx", ".toml", ".xml"]);
+const DATA_EXTENSIONS = new Set([".json", ".yaml", ".yml", ".csv", ".md", ".html", ".xlsx", ".toml", ".xml"]);
 
 // ── Main export ───────────────────────────────────────────────────────────────
 
@@ -51,7 +51,7 @@ export async function batchConvert(args: BatchConvertArgs): Promise<BatchConvert
       }
 
       const isImage = IMAGE_EXTENSIONS.has(sourceExt);
-      const isData  = DATA_EXTENSIONS.has(sourceExt);
+      const isData = DATA_EXTENSIONS.has(sourceExt);
 
       const inputBuffer = await readFile(inputPath);
       let outputData: Buffer | string;

@@ -3,8 +3,8 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-import { readFile, writeFile, access } from "node:fs/promises";
-import { extname, join, dirname, basename } from "node:path";
+import { readFile, writeFile, access } from "fs/promises";
+import { extname, join, dirname, basename } from "path";
 import { ConvertFileSchema, BatchConvertSchema } from "./types/index.js";
 import { convertImage } from "./converters/image.js";
 import { convertData } from "./converters/data.js";

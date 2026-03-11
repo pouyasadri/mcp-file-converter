@@ -1,8 +1,8 @@
-import { createReadStream, createWriteStream } from "node:fs";
-import { readFile, writeFile, mkdir } from "node:fs/promises";
-import { join, dirname, basename, extname } from "node:path";
-import { createGzip, createGunzip } from "node:zlib";
-import { pipeline } from "node:stream/promises";
+import { createReadStream, createWriteStream } from "fs";
+import { readFile, mkdir } from "fs/promises";
+import { join, dirname, basename, extname } from "path";
+import { createGzip, createGunzip } from "zlib";
+import { pipeline } from "stream/promises";
 import archiver from "archiver";
 import unzipper from "unzipper";
 

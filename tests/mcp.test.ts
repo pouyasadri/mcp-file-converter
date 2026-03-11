@@ -1,5 +1,4 @@
 import { test, expect, describe } from "bun:test";
-import { join } from "node:path";
 import { ConvertFileSchema } from "../src/types/index";
 
 // A small unit test to just ensure the Zod schema natively validates the new parameters correctly
