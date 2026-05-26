@@ -7,6 +7,11 @@ import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
 
 const TMP = "/tmp";
 
+type ToolTextResult = {
+  content: Array<{ type: string; text?: string }>;
+  isError?: boolean;
+};
+
 async function createTmpPng(name: string): Promise<string> {
   const path = join(TMP, name);
   const buf = await sharp({
@@ -43,7 +48,7 @@ describe("live MCP stdio server", () => {
   });
 
   test("should call discover_capabilities through stdio", async () => {
-    const result = await client.callTool({ name: "discover_capabilities", arguments: {} });
+    const result = await client.callTool({ name: "discover_capabilities", arguments: {} }) as ToolTextResult;
     expect(result.content[0]?.type).toBe("text");
 
     const payload = JSON.parse(result.content[0]?.text ?? "{}");
@@ -57,7 +62,7 @@ describe("live MCP stdio server", () => {
     const result = await client.callTool({
       name: "convert_file",
       arguments: { inputPath, targetExtension: ".webp", preview: true },
-    });
+    }) as ToolTextResult;
 
     const payload = JSON.parse(result.content[0]?.text ?? "{}");
     expect(payload.sourceKind).toBe("image");
@@ -72,7 +77,7 @@ describe("live MCP stdio server", () => {
     const result = await client.callTool({
       name: "inspect_file",
       arguments: { inputPath: "/tmp/definitely-missing-file.png" },
-    });
+    }) as ToolTextResult;
 
     expect(result.isError).toBe(true);
     expect(result.content[0]?.text).toContain("Source file not found");
@@ -82,7 +87,7 @@ describe("live MCP stdio server", () => {
     const result = await client.callTool({
       name: "suggest_targets",
       arguments: {},
-    });
+    }) as ToolTextResult;
 
     expect(result.isError).toBe(true);
     expect(result.content[0]?.text).toContain("Error during conversion:");
