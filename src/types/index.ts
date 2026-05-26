@@ -1,12 +1,13 @@
 import { z } from "zod";
+import { MAX_IMAGE_DIMENSION } from "../constants.js";
 
 export const ConvertFileSchema = z.object({
   inputPath: z.string().describe("Absolute path to the source file"),
   targetExtension: z.string().describe("Target extension (e.g., '.jpg', '.png', '.csv', '.json', '.yaml', '.toml', '.xml')"),
   overwrite: z.boolean().optional().default(false).describe("Whether to overwrite the original file or create a copy"),
   preview: z.boolean().optional().default(false).describe("If true, only return the planned output without writing a file"),
-  width: z.number().int().optional().describe("Optional: Resize image width (Image files only)"),
-  height: z.number().int().optional().describe("Optional: Resize image height (Image files only)"),
+  width: z.number().int().min(1).max(MAX_IMAGE_DIMENSION).optional().describe("Optional: Resize image width (Image files only)"),
+  height: z.number().int().min(1).max(MAX_IMAGE_DIMENSION).optional().describe("Optional: Resize image height (Image files only)"),
   quality: z.number().int().min(1).max(100).optional().describe("Optional: Compress image output 1-100 (Image files only)"),
 });
 
@@ -18,8 +19,8 @@ export const BatchConvertSchema = z.object({
   targetExtension: z.string().describe("Target extension for all files (e.g., '.webp', '.json')"),
   overwrite: z.boolean().optional().default(false).describe("Whether to overwrite originals or create copies"),
   preview: z.boolean().optional().default(false).describe("If true, only return the planned outputs without writing files"),
-  width: z.number().int().optional().describe("Optional: Image width resize (Image files only)"),
-  height: z.number().int().optional().describe("Optional: Image height resize (Image files only)"),
+  width: z.number().int().min(1).max(MAX_IMAGE_DIMENSION).optional().describe("Optional: Image width resize (Image files only)"),
+  height: z.number().int().min(1).max(MAX_IMAGE_DIMENSION).optional().describe("Optional: Image height resize (Image files only)"),
   quality: z.number().int().min(1).max(100).optional().describe("Optional: Image quality 1-100 (Image files only)"),
 });
 
