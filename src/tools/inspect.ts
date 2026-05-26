@@ -6,7 +6,11 @@ import * as XLSX from "xlsx";
 import { XMLParser } from "fast-xml-parser";
 import { readFile } from "fs/promises";
 import { extname } from "path";
-import { getFileKind, normalizeExtension } from "./routing.js";
+import {
+  getFileKind,
+  getSuggestedTargetExtensions,
+  normalizeExtension,
+} from "./routing.js";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -19,6 +23,7 @@ export interface ImageMetadata {
   colorSpace: string | undefined;
   hasAlpha: boolean | undefined;
   sizeBytes: number;
+  suggestedTargets: readonly string[];
 }
 
 export interface DataMetadata {
@@ -27,6 +32,7 @@ export interface DataMetadata {
   rowCount: number;
   columns: string[];
   sizeBytes: number;
+  suggestedTargets: readonly string[];
 }
 
 export interface MarkupMetadata {
@@ -35,6 +41,7 @@ export interface MarkupMetadata {
   characterCount: number;
   lineCount: number;
   sizeBytes: number;
+  suggestedTargets: readonly string[];
 }
 
 export type FileMetadata = ImageMetadata | DataMetadata | MarkupMetadata;
@@ -99,6 +106,7 @@ export async function inspectFile(inputPath: string): Promise<FileMetadata> {
         colorSpace: meta.space,
         hasAlpha: meta.hasAlpha,
         sizeBytes,
+        suggestedTargets: getSuggestedTargetExtensions("image"),
       };
     }
 
@@ -110,6 +118,7 @@ export async function inspectFile(inputPath: string): Promise<FileMetadata> {
         characterCount: text.length,
         lineCount: text.split("\n").length,
         sizeBytes,
+        suggestedTargets: getSuggestedTargetExtensions("markup"),
       };
     }
 
@@ -122,7 +131,14 @@ export async function inspectFile(inputPath: string): Promise<FileMetadata> {
         if (!ws) throw new Error("Could not read the first sheet from XLSX file.");
         const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws);
         const columns = rows.length > 0 ? Object.keys(rows[0] ?? {}) : [];
-        return { type: "data", format: "xlsx", rowCount: rows.length, columns, sizeBytes };
+        return {
+          type: "data",
+          format: "xlsx",
+          rowCount: rows.length,
+          columns,
+          sizeBytes,
+          suggestedTargets: getSuggestedTargetExtensions("structured"),
+        };
       }
 
       const content = inputBuffer.toString("utf-8");
@@ -139,6 +155,7 @@ export async function inspectFile(inputPath: string): Promise<FileMetadata> {
         rowCount: rows.length,
         columns,
         sizeBytes,
+        suggestedTargets: getSuggestedTargetExtensions("structured"),
       };
     }
 

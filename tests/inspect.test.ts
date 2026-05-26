@@ -44,6 +44,7 @@ describe("inspect_file — images", () => {
       expect(meta.width).toBe(80);
       expect(meta.height).toBe(60);
       expect(meta.sizeBytes).toBeGreaterThan(0);
+      expect(meta.suggestedTargets).toContain(".webp");
     }
   });
 });
@@ -60,6 +61,7 @@ describe("inspect_file — data files", () => {
       expect(meta.rowCount).toBe(2);
       expect(meta.columns).toContain("id");
       expect(meta.columns).toContain("name");
+      expect(meta.suggestedTargets).toContain(".json");
     }
   });
 
@@ -78,6 +80,7 @@ describe("inspect_file — data files", () => {
     if (meta.type === "data") {
       expect(meta.rowCount).toBe(1);
       expect(meta.columns).toContain("product");
+      expect(meta.suggestedTargets).toContain(".yaml");
     }
   });
 });
@@ -93,6 +96,7 @@ describe("inspect_file — markup", () => {
     if (meta.type === "markup") {
       expect(meta.characterCount).toBe(content.length);
       expect(meta.lineCount).toBe(4);
+      expect(meta.suggestedTargets).toContain(".html");
     }
   });
 });
