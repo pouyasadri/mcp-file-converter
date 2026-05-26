@@ -39,9 +39,7 @@ mcpServer.server.setRequestHandler(ListToolsRequestSchema, async () => ({
     {
       name: "convert_file",
       description:
-        "Convert a single file to another format. Supports: Images (PNG/JPG/WebP/AVIF/TIFF), " +
-        "Data (JSON/YAML/CSV/XLSX/TOML/XML), and Markup (Markdown/HTML). " +
-        "Optional image params: width, height, quality. " +
+        "Convert a single file to another format. Supports images, structured data, and markup. " +
         "Use preview=true to return the planned output path and suggested targets without writing a file.",
       inputSchema: {
         type: "object",
@@ -60,8 +58,7 @@ mcpServer.server.setRequestHandler(ListToolsRequestSchema, async () => ({
     {
       name: "batch_convert_files",
       description:
-        "Convert multiple files to the same target format in parallel. " +
-        "Returns a per-file success/failure report. " +
+        "Convert multiple files to the same target format in parallel with per-file success/failure output. " +
         "Use preview=true to return planned output paths without writing files.",
       inputSchema: {
         type: "object",
@@ -80,10 +77,7 @@ mcpServer.server.setRequestHandler(ListToolsRequestSchema, async () => ({
     {
       name: "inspect_file",
       description:
-        "Return metadata about a file without modifying it. " +
-        "Images: format, dimensions, color space. Data files: row count, column names. " +
-        "Markup files: character count, line count. " +
-        "Includes suggested target formats for the detected file family.",
+        "Return metadata about a file without modifying it, including suggested target formats for the detected family.",
       inputSchema: {
         type: "object",
         properties: {
@@ -95,8 +89,7 @@ mcpServer.server.setRequestHandler(ListToolsRequestSchema, async () => ({
     {
       name: "suggest_targets",
       description:
-        "Suggest valid conversion targets for a file family. " +
-        "Provide inputPath or sourceExtension to get recommended target formats.",
+        "Suggest valid conversion targets for a file family using inputPath or sourceExtension.",
       inputSchema: {
         type: "object",
         properties: {
