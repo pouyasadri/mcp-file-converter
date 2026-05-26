@@ -5,6 +5,7 @@ import {
   getFileKind,
   getSupportedExtensions,
   getSuggestedTargetMessage,
+  getTargetSuggestions,
   normalizeExtension,
 } from "../src/tools/routing";
 
@@ -39,5 +40,11 @@ describe("routing helpers", () => {
     expect(getSuggestedTargetMessage(".png")).toContain(".webp");
     expect(getSuggestedTargetMessage(".json")).toContain(".yaml");
     expect(getSuggestedTargetMessage(".md")).toContain(".html");
+  });
+
+  test("builds structured target suggestions", () => {
+    const result = getTargetSuggestions(".png");
+    expect(result.sourceKind).toBe("image");
+    expect(result.suggestedTargets).toContain(".webp");
   });
 });

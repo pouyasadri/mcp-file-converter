@@ -52,6 +52,35 @@ export function getSuggestedTargetMessage(sourceExt: string): string {
   return `Suggested targets for ${getKindLabel(kind)} files: ${suggestions}.`;
 }
 
+export interface TargetSuggestions {
+  sourceExtension: string;
+  sourceKind: FileKind;
+  suggestedTargets: readonly string[];
+  message: string;
+}
+
+export function getTargetSuggestions(sourceExt: string): TargetSuggestions {
+  const sourceExtension = normalizeExtension(sourceExt);
+  const sourceKind = getFileKind(sourceExtension);
+
+  if (sourceKind === "unsupported") {
+    return {
+      sourceExtension,
+      sourceKind,
+      suggestedTargets: [],
+      message: "No conversion suggestions available for this file type.",
+    };
+  }
+
+  const suggestedTargets = getSuggestedTargetExtensions(sourceKind);
+  return {
+    sourceExtension,
+    sourceKind,
+    suggestedTargets,
+    message: getSuggestedTargetMessage(sourceExtension),
+  };
+}
+
 export function getKindLabel(kind: Exclude<FileKind, "unsupported">): string {
   if (kind === "image") return "image";
   if (kind === "structured") return "structured data";
