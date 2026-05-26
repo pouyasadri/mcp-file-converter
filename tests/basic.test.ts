@@ -7,5 +7,5 @@ test("path extension logic", () => {
 });
 
 test("environment check", () => {
-    expect(process.env.NODE_ENV).toBeDefined;
+    expect(process.env.NODE_ENV).toBeDefined();
 });
