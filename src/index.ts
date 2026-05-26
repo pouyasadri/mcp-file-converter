@@ -12,10 +12,11 @@ import { extractPdfText } from "./tools/pdf.js";
 import { inspectFile } from "./tools/inspect.js";
 import { compressFile, decompressFile } from "./tools/compress.js";
 import { batchConvert } from "./tools/batch.js";
-import { buildOutputPath } from "./tools/preview.js";
+import { buildConversionPreview, buildOutputPath } from "./tools/preview.js";
 import {
   getFamilyConversionError,
   getFileKind,
+  getSuggestedTargetMessage,
   normalizeExtension,
 } from "./tools/routing.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -249,17 +250,16 @@ mcpServer.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const outputPath = buildOutputPath(inputPath, sourceExt, normalizedTargetExt, overwrite);
 
       if (preview) {
+        const conversionPreview = buildConversionPreview(
+          inputPath,
+          sourceExt,
+          normalizedTargetExt,
+          overwrite
+        );
         return {
           content: [{
             type: "text",
-            text: JSON.stringify({
-              preview: true,
-              inputPath,
-              sourceExtension: sourceExt,
-              targetExtension: normalizedTargetExt,
-              outputPath,
-              overwrite,
-            }, null, 2),
+            text: JSON.stringify(conversionPreview, null, 2),
           }],
         };
       }
@@ -282,7 +282,9 @@ mcpServer.server.setRequestHandler(CallToolRequestSchema, async (request) => {
         }],
       };
     } catch (error: any) {
-      return { content: [{ type: "text", text: `Error during conversion: ${error.message}` }], isError: true };
+      const sourceExt = extname(String(request.params.arguments?.inputPath ?? "")).toLowerCase();
+      const suggestion = sourceExt ? ` ${getSuggestedTargetMessage(sourceExt)}` : "";
+      return { content: [{ type: "text", text: `Error during conversion: ${error.message}.${suggestion}` }], isError: true };
     }
   }
 
