@@ -24,10 +24,10 @@ Effortless switching between common structured formats:
 ### 🛠️ Utilities & Archiving
 Advanced tools for file management:
 - **Batch Conversion:** Process entire folders/lists in parallel.
-- **File Inspection:** Instant metadata and format-aware summaries for images, structured data, and markup.
 - **File Inspection:** Instant metadata, suggested targets, and format-aware summaries for images, structured data, and markup.
 - **Preview Mode:** See the planned output path before writing anything.
 - **Smart Suggestions:** Invalid conversion requests return suggested targets for the detected file family.
+- **Target Suggestions Tool:** Ask for recommended targets directly from a source path or extension.
 - **Gzip & Zip**: Native compression/decompression.
 - **PDF Text Extraction:** Read plain-text from PDFs.
 
@@ -41,6 +41,7 @@ Supported file families:
 Cross-family conversion is intentionally blocked. For example, an image cannot be converted to JSON, and structured data cannot be converted to WebP.
 
 The shared routing layer is used by conversion, batch conversion, and inspection so the server makes consistent decisions everywhere.
+Structured tool responses like preview, target suggestions, and conversion summaries use shared formatters so their output stays consistent.
 
 When a conversion is invalid, the server now suggests valid target formats for the source file family, such as WebP/AVIF for images or YAML/JSON for structured files.
 Inspection results also include suggested target formats so an agent can pick the next conversion without another lookup.
