@@ -6,8 +6,16 @@ export function formatConversionSuccessMessage(args: {
   inputPath: string;
   targetExtension: string;
   outputPath: string;
+  manifest?: unknown;
 }): string {
-  return `Successfully converted ${args.inputPath} to ${args.targetExtension}. Output saved to: ${args.outputPath}`;
+  return JSON.stringify({
+    status: "success",
+    message: `Successfully converted ${args.inputPath} to ${args.targetExtension}. Output saved to: ${args.outputPath}`,
+    inputPath: args.inputPath,
+    targetExtension: args.targetExtension,
+    outputPath: args.outputPath,
+    manifest: args.manifest,
+  }, null, 2);
 }
 
 export function formatBatchConversionMessage(result: {
