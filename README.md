@@ -3,7 +3,7 @@
 [![CI/CD](https://github.com/pouyasadri/mcp-file-converter/actions/workflows/ci.yml/badge.svg)](https://github.com/pouyasadri/mcp-file-converter/actions/workflows/ci.yml)
 [![Docker Image](https://img.shields.io/badge/docker-ghcr.io-blue.svg)](https://github.com/pouyasadri/mcp-file-converter/pkgs/container/mcp-file-converter)
 
-A high-performance **Model Context Protocol (MCP)** server designed for seamless file transformations. Empowers AI agents to convert images and structured data formats through simple tool calls.
+A high-performance **Model Context Protocol (MCP)** server designed for seamless file transformations. Empowers AI agents to convert files through simple tool calls.
 
 Built with [Bun](https://bun.sh/) for maximum speed and efficiency.
 
@@ -14,18 +14,30 @@ Powered by **Sharp**, supporting high-quality transformations between:
 - **Formats**: PNG, JPG, WebP, AVIF, TIFF.
 - **Auto-optimization**: Intelligent defaults for web-ready assets.
 
-### 📊 Data & Markup Transformation
-Effortless switching between common data and markup structures:
+### 📊 Structured Data & Markup Transformation
+Effortless switching between common structured formats:
 - **JSON ↔️ YAML ↔️ CSV ↔️ XLSX (Excel) ↔️ TOML ↔️ XML**
 - **Markdown ↔️ HTML**
-- Preserves structure and types during conversion.
+- Conversion policy is family-based: images convert only to images, structured data only to structured data, and markup only to markup.
+- Preserves structure and types during conversion where the target format allows it.
 
 ### 🛠️ Utilities & Archiving
 Advanced tools for file management:
 - **Batch Conversion:** Process entire folders/lists in parallel.
-- **File Inspection:** Instant metadata (dimensions, row counts, etc.).
+- **File Inspection:** Instant metadata and format-aware summaries for images, structured data, and markup.
 - **Gzip & Zip**: Native compression/decompression.
 - **PDF Text Extraction:** Read plain-text from PDFs.
+
+## 🔀 Conversion Policy
+
+Supported file families:
+- **Image:** `.jpg`, `.jpeg`, `.png`, `.webp`, `.avif`, `.tiff`
+- **Structured:** `.json`, `.yaml`, `.yml`, `.csv`, `.xlsx`, `.toml`, `.xml`
+- **Markup:** `.md`, `.html`
+
+Cross-family conversion is intentionally blocked. For example, an image cannot be converted to JSON, and structured data cannot be converted to WebP.
+
+The shared routing layer is used by conversion, batch conversion, and inspection so the server makes consistent decisions everywhere.
 
 ## 🚀 Quick Start
 
