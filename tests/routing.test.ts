@@ -4,6 +4,7 @@ import {
   getFamilyConversionError,
   getFileKind,
   getSupportedExtensions,
+  getSuggestedTargetMessage,
   normalizeExtension,
 } from "../src/tools/routing";
 
@@ -32,5 +33,11 @@ describe("routing helpers", () => {
     expect(getFamilyConversionError(".png", ".json")).toContain("Cannot convert a image");
     expect(canConvertBetween(".json", ".yaml")).toBe(true);
     expect(canConvertBetween(".md", ".html")).toBe(true);
+  });
+
+  test("suggests targets by file kind", () => {
+    expect(getSuggestedTargetMessage(".png")).toContain(".webp");
+    expect(getSuggestedTargetMessage(".json")).toContain(".yaml");
+    expect(getSuggestedTargetMessage(".md")).toContain(".html");
   });
 });

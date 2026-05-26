@@ -38,6 +38,20 @@ export function getSupportedExtensions(kind: Exclude<FileKind, "unsupported">): 
   return MARKUP_EXTENSIONS;
 }
 
+export function getSuggestedTargetExtensions(kind: Exclude<FileKind, "unsupported">): readonly string[] {
+  if (kind === "image") return [".webp", ".avif", ".png", ".jpg", ".jpeg", ".tiff"];
+  if (kind === "structured") return [".json", ".yaml", ".csv", ".xlsx", ".toml", ".xml"];
+  return [".html", ".md"];
+}
+
+export function getSuggestedTargetMessage(sourceExt: string): string {
+  const kind = getFileKind(sourceExt);
+  if (kind === "unsupported") return "No conversion suggestions available for this file type.";
+
+  const suggestions = getSuggestedTargetExtensions(kind).join(", ");
+  return `Suggested targets for ${getKindLabel(kind)} files: ${suggestions}.`;
+}
+
 export function getKindLabel(kind: Exclude<FileKind, "unsupported">): string {
   if (kind === "image") return "image";
   if (kind === "structured") return "structured data";
@@ -61,7 +75,8 @@ export function getFamilyConversionError(sourceExt: string, targetExt: string): 
   if (sourceKind !== targetKind) {
     return (
       `Cannot convert a ${getKindLabel(sourceKind)} (${normalizedSource}) to a ${getKindLabel(targetKind)} (${normalizedTarget}). ` +
-      `Target must be one of: ${getSupportedExtensions(sourceKind).join(", ")}.`
+      `Target must be one of: ${getSupportedExtensions(sourceKind).join(", ")}. ` +
+      `${getSuggestedTargetMessage(sourceExt)}`
     );
   }
 
