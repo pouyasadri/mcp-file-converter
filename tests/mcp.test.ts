@@ -72,5 +72,14 @@ describe("MCP Tool Schema Validation", () => {
 
     test("should reject invalid image conversion dimensions", () => {
         expect(() => ImageConversionOptionsSchema.parse({ width: 0 })).toThrow();
+        expect(() => ImageConversionOptionsSchema.parse({ width: 20000 })).toThrow();
+    });
+
+    test("should reject oversized convert_file dimensions at the schema boundary", () => {
+        expect(() => ConvertFileSchema.parse({ inputPath: "/tmp/fake.png", targetExtension: "webp", width: 20000 })).toThrow();
+    });
+
+    test("should reject oversized batch dimensions at the schema boundary", () => {
+        expect(() => BatchConvertSchema.parse({ inputPaths: ["/tmp/a.png"], targetExtension: ".webp", height: 20000 })).toThrow();
     });
 });
