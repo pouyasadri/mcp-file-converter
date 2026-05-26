@@ -77,4 +77,14 @@ describe("live MCP stdio server", () => {
     expect(result.isError).toBe(true);
     expect(result.content[0]?.text).toContain("Source file not found");
   });
+
+  test("should prefix top-level MCP errors consistently", async () => {
+    const result = await client.callTool({
+      name: "suggest_targets",
+      arguments: {},
+    });
+
+    expect(result.isError).toBe(true);
+    expect(result.content[0]?.text).toContain("Error during conversion:");
+  });
 });
