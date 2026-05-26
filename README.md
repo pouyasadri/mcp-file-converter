@@ -1,5 +1,7 @@
 # MCP File Converter
 
+[![CI](https://github.com/pouyasadri/mcp-file-converter/actions/workflows/ci.yml/badge.svg)](https://github.com/pouyasadri/mcp-file-converter/actions/workflows/ci.yml)
+
 `file-converter-mcp` is a local Model Context Protocol server for file transformation and inspection. It is designed for agent-driven workflows that need deterministic conversions, strict validation, and local-only file access.
 
 The server runs on Bun, speaks stdio MCP, and does not bind to a network port.
