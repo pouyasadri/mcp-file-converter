@@ -10,7 +10,7 @@ export const ConvertFileSchema = z.object({
   quality: z.number().int().min(1).max(100).optional().describe("Optional: Compress image output 1-100 (Image files only)"),
 });
 
-export type ConvertFileArgs = z.infer<typeof ConvertFileSchema>;
+export type ConvertFileArgs = z.input<typeof ConvertFileSchema>;
 
 // Schema for the batch_convert_files tool
 export const BatchConvertSchema = z.object({
@@ -23,7 +23,7 @@ export const BatchConvertSchema = z.object({
   quality: z.number().int().min(1).max(100).optional().describe("Optional: Image quality 1-100 (Image files only)"),
 });
 
-export type BatchConvertArgs = z.infer<typeof BatchConvertSchema>;
+export type BatchConvertArgs = z.input<typeof BatchConvertSchema>;
 
 export const SuggestTargetsSchema = z.object({
   inputPath: z.string().optional().describe("Optional: absolute path to the source file"),
@@ -32,4 +32,4 @@ export const SuggestTargetsSchema = z.object({
   message: "Either inputPath or sourceExtension must be provided",
 });
 
-export type SuggestTargetsArgs = z.infer<typeof SuggestTargetsSchema>;
+export type SuggestTargetsArgs = z.input<typeof SuggestTargetsSchema>;

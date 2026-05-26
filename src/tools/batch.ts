@@ -31,7 +31,15 @@ export interface BatchConvertResult {
 // ── Main export ───────────────────────────────────────────────────────────────
 
 export async function batchConvert(args: BatchConvertArgs): Promise<BatchConvertResult> {
-  const { inputPaths, targetExtension, overwrite, preview, width, height, quality } = args;
+  const {
+    inputPaths,
+    targetExtension,
+    overwrite = false,
+    preview = false,
+    width,
+    height,
+    quality,
+  } = args;
 
   const normalizedTargetExt = normalizeExtension(targetExtension);
 
