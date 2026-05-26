@@ -3,6 +3,11 @@ import { extname, join, dirname, basename } from "path";
 import { convertImage } from "../converters/image.js";
 import { convertData } from "../converters/data.js";
 import type { BatchConvertArgs } from "../types/index.js";
+import {
+  getFamilyConversionError,
+  getFileKind,
+  normalizeExtension,
+} from "./routing.js";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -22,17 +27,12 @@ export interface BatchConvertResult {
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const IMAGE_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".webp", ".avif", ".tiff"]);
-const DATA_EXTENSIONS = new Set([".json", ".yaml", ".yml", ".csv", ".md", ".html", ".xlsx", ".toml", ".xml"]);
-
 // ── Main export ───────────────────────────────────────────────────────────────
 
 export async function batchConvert(args: BatchConvertArgs): Promise<BatchConvertResult> {
   const { inputPaths, targetExtension, overwrite, width, height, quality } = args;
 
-  const normalizedTargetExt = targetExtension.startsWith(".")
-    ? targetExtension
-    : `.${targetExtension}`;
+  const normalizedTargetExt = normalizeExtension(targetExtension);
 
   // Process all files concurrently; failures are captured per-file, not thrown
   const settled = await Promise.allSettled(
@@ -50,18 +50,18 @@ export async function batchConvert(args: BatchConvertArgs): Promise<BatchConvert
         throw new Error("Source and target extensions are the same. No conversion needed.");
       }
 
-      const isImage = IMAGE_EXTENSIONS.has(sourceExt);
-      const isData = DATA_EXTENSIONS.has(sourceExt);
+      const conversionError = getFamilyConversionError(sourceExt, normalizedTargetExt);
+      if (conversionError) {
+        throw new Error(conversionError);
+      }
 
       const inputBuffer = await readFile(inputPath);
       let outputData: Buffer | string;
 
-      if (isImage) {
+      if (getFileKind(sourceExt) === "image") {
         outputData = await convertImage(inputBuffer, normalizedTargetExt, { width, height, quality });
-      } else if (isData) {
-        outputData = await convertData(inputBuffer, sourceExt, normalizedTargetExt);
       } else {
-        throw new Error(`Unsupported source file type: ${sourceExt}`);
+        outputData = await convertData(inputBuffer, sourceExt, normalizedTargetExt);
       }
 
       const fileName = basename(inputPath, sourceExt);

@@ -6,6 +6,7 @@ import * as XLSX from "xlsx";
 import { XMLParser } from "fast-xml-parser";
 import { readFile } from "fs/promises";
 import { extname } from "path";
+import { getFileKind, normalizeExtension } from "./routing.js";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -39,10 +40,6 @@ export interface MarkupMetadata {
 export type FileMetadata = ImageMetadata | DataMetadata | MarkupMetadata;
 
 // ── Extension sets ────────────────────────────────────────────────────────────
-
-const IMAGE_EXTS = new Set([".jpg", ".jpeg", ".png", ".webp", ".avif", ".tiff"]);
-const MARKUP_EXTS = new Set([".md", ".html"]);
-const DATA_EXTS = new Set([".json", ".yaml", ".yml", ".csv", ".xlsx", ".toml", ".xml"]);
 
 // ── Internal helper: parse text-based data files into row arrays ──────────────
 
@@ -86,10 +83,11 @@ function parseDataRows(content: string, ext: string): Record<string, unknown>[] 
 export async function inspectFile(inputPath: string): Promise<FileMetadata> {
   const inputBuffer = await readFile(inputPath);
   const ext = extname(inputPath).toLowerCase();
+  const normalizedExt = normalizeExtension(ext);
   const sizeBytes = inputBuffer.length;
 
   // ── Image ──────────────────────────────────────────────────────────────────
-  if (IMAGE_EXTS.has(ext)) {
+  if (getFileKind(ext) === "image") {
     const meta = await sharp(inputBuffer).metadata();
     return {
       type: "image",
@@ -104,11 +102,11 @@ export async function inspectFile(inputPath: string): Promise<FileMetadata> {
   }
 
   // ── Markup ─────────────────────────────────────────────────────────────────
-  if (MARKUP_EXTS.has(ext)) {
+  if (getFileKind(ext) === "markup") {
     const text = inputBuffer.toString("utf-8");
     return {
       type: "markup",
-      format: ext.replace(".", ""),
+      format: normalizedExt.replace(".", ""),
       characterCount: text.length,
       lineCount: text.split("\n").length,
       sizeBytes,
@@ -116,7 +114,7 @@ export async function inspectFile(inputPath: string): Promise<FileMetadata> {
   }
 
   // ── XLSX (binary) ──────────────────────────────────────────────────────────
-  if (ext === ".xlsx") {
+  if (normalizedExt === ".xlsx") {
     const wb = XLSX.read(inputBuffer, { type: "buffer" });
     const sheetName = wb.SheetNames[0];
     if (!sheetName) throw new Error("XLSX file contains no sheets.");
@@ -128,7 +126,7 @@ export async function inspectFile(inputPath: string): Promise<FileMetadata> {
   }
 
   // ── Text-based structured data ─────────────────────────────────────────────
-  if (DATA_EXTS.has(ext)) {
+  if (getFileKind(ext) === "structured") {
     const content = inputBuffer.toString("utf-8");
     let rows: Record<string, unknown>[] = [];
     try {
@@ -139,7 +137,7 @@ export async function inspectFile(inputPath: string): Promise<FileMetadata> {
     const columns = rows.length > 0 ? Object.keys(rows[0] ?? {}) : [];
     return {
       type: "data",
-      format: ext.replace(".", ""),
+      format: normalizedExt.replace(".", ""),
       rowCount: rows.length,
       columns,
       sizeBytes,

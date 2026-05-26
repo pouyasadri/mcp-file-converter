@@ -12,15 +12,17 @@ import { extractPdfText } from "./tools/pdf.js";
 import { inspectFile } from "./tools/inspect.js";
 import { compressFile, decompressFile } from "./tools/compress.js";
 import { batchConvert } from "./tools/batch.js";
+import {
+  getFamilyConversionError,
+  getFileKind,
+  normalizeExtension,
+} from "./tools/routing.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
 const mcpServer = new McpServer(
   { name: "file-converter", version: "2.0.0" },
   { capabilities: { tools: {} } }
 );
-
-const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp", ".avif", ".tiff"];
-const DATA_EXTENSIONS  = [".json", ".yaml", ".yml", ".csv", ".md", ".html", ".xlsx", ".toml", ".xml"];
 
 // ── Tool: list_tools ───────────────────────────────────────────────────────────
 
@@ -228,9 +230,7 @@ mcpServer.server.setRequestHandler(CallToolRequestSchema, async (request) => {
         ConvertFileSchema.parse(request.params.arguments);
 
       const sourceExt = extname(inputPath);
-      const normalizedTargetExt = targetExtension.startsWith(".")
-        ? targetExtension
-        : `.${targetExtension}`;
+      const normalizedTargetExt = normalizeExtension(targetExtension);
 
       if (sourceExt.toLowerCase() === normalizedTargetExt.toLowerCase()) {
         return { content: [{ type: "text", text: "Source and target extensions are the same. No conversion needed." }] };
@@ -239,31 +239,16 @@ mcpServer.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       await assertFileExists(inputPath);
       const inputBuffer = await readFile(inputPath);
 
-      const isImageSrc = IMAGE_EXTENSIONS.includes(sourceExt.toLowerCase());
-      const isDataSrc  = DATA_EXTENSIONS.includes(sourceExt.toLowerCase());
-      const isImageTgt = IMAGE_EXTENSIONS.includes(normalizedTargetExt.toLowerCase());
-      const isDataTgt  = DATA_EXTENSIONS.includes(normalizedTargetExt.toLowerCase());
-
-      if (isImageSrc && !isImageTgt) {
-        throw new Error(
-          `Cannot convert an image (${sourceExt}) to a data format (${normalizedTargetExt}). ` +
-          `Target must be one of: ${IMAGE_EXTENSIONS.join(", ")}.`
-        );
-      }
-      if (isDataSrc && !isDataTgt) {
-        throw new Error(
-          `Cannot convert a data file (${sourceExt}) to an image format (${normalizedTargetExt}). ` +
-          `Target must be one of: ${DATA_EXTENSIONS.join(", ")}.`
-        );
+      const conversionError = getFamilyConversionError(sourceExt, normalizedTargetExt);
+      if (conversionError) {
+        throw new Error(conversionError);
       }
 
       let outputData: Buffer | string;
-      if (isImageSrc) {
+      if (getFileKind(sourceExt) === "image") {
         outputData = await convertImage(inputBuffer, normalizedTargetExt, { width, height, quality });
-      } else if (isDataSrc) {
-        outputData = await convertData(inputBuffer, sourceExt, normalizedTargetExt);
       } else {
-        throw new Error(`Unsupported source file type: ${sourceExt}`);
+        outputData = await convertData(inputBuffer, sourceExt, normalizedTargetExt);
       }
 
       const fileName = basename(inputPath, sourceExt);
