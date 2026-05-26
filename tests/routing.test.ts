@@ -31,7 +31,7 @@ describe("routing helpers", () => {
 
   test("blocks cross-family conversions", () => {
     expect(canConvertBetween(".png", ".json")).toBe(false);
-    expect(getFamilyConversionError(".png", ".json")).toContain("Cannot convert a image");
+    expect(getFamilyConversionError(".png", ".json")).toContain("Cannot convert an image");
     expect(canConvertBetween(".json", ".yaml")).toBe(true);
     expect(canConvertBetween(".md", ".html")).toBe(true);
   });
