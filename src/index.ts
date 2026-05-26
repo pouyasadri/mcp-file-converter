@@ -22,7 +22,7 @@ mcpServer.server.setRequestHandler(CallToolRequestSchema, async (request) => {
     }) as any;
   } catch (error: any) {
     return {
-      content: [{ type: "text", text: `Error: ${error.message}` }],
+      content: [{ type: "text", text: `Error during conversion: ${error.message}` }],
       isError: true,
     };
   }
