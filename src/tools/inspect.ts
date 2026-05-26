@@ -84,64 +84,66 @@ export async function inspectFile(inputPath: string): Promise<FileMetadata> {
   const inputBuffer = await readFile(inputPath);
   const ext = extname(inputPath).toLowerCase();
   const normalizedExt = normalizeExtension(ext);
+  const fileKind = getFileKind(ext);
   const sizeBytes = inputBuffer.length;
 
-  // ── Image ──────────────────────────────────────────────────────────────────
-  if (getFileKind(ext) === "image") {
-    const meta = await sharp(inputBuffer).metadata();
-    return {
-      type: "image",
-      format: meta.format,
-      width: meta.width,
-      height: meta.height,
-      channels: meta.channels,
-      colorSpace: meta.space,
-      hasAlpha: meta.hasAlpha,
-      sizeBytes,
-    };
-  }
-
-  // ── Markup ─────────────────────────────────────────────────────────────────
-  if (getFileKind(ext) === "markup") {
-    const text = inputBuffer.toString("utf-8");
-    return {
-      type: "markup",
-      format: normalizedExt.replace(".", ""),
-      characterCount: text.length,
-      lineCount: text.split("\n").length,
-      sizeBytes,
-    };
-  }
-
-  // ── XLSX (binary) ──────────────────────────────────────────────────────────
-  if (normalizedExt === ".xlsx") {
-    const wb = XLSX.read(inputBuffer, { type: "buffer" });
-    const sheetName = wb.SheetNames[0];
-    if (!sheetName) throw new Error("XLSX file contains no sheets.");
-    const ws = wb.Sheets[sheetName];
-    if (!ws) throw new Error("Could not read the first sheet from XLSX file.");
-    const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws);
-    const columns = rows.length > 0 ? Object.keys(rows[0] ?? {}) : [];
-    return { type: "data", format: "xlsx", rowCount: rows.length, columns, sizeBytes };
-  }
-
-  // ── Text-based structured data ─────────────────────────────────────────────
-  if (getFileKind(ext) === "structured") {
-    const content = inputBuffer.toString("utf-8");
-    let rows: Record<string, unknown>[] = [];
-    try {
-      rows = parseDataRows(content, ext);
-    } catch {
-      // Return minimal metadata if parsing fails — the file exists but may be malformed
+  switch (fileKind) {
+    case "image": {
+      const meta = await sharp(inputBuffer).metadata();
+      return {
+        type: "image",
+        format: meta.format,
+        width: meta.width,
+        height: meta.height,
+        channels: meta.channels,
+        colorSpace: meta.space,
+        hasAlpha: meta.hasAlpha,
+        sizeBytes,
+      };
     }
-    const columns = rows.length > 0 ? Object.keys(rows[0] ?? {}) : [];
-    return {
-      type: "data",
-      format: normalizedExt.replace(".", ""),
-      rowCount: rows.length,
-      columns,
-      sizeBytes,
-    };
+
+    case "markup": {
+      const text = inputBuffer.toString("utf-8");
+      return {
+        type: "markup",
+        format: normalizedExt.replace(".", ""),
+        characterCount: text.length,
+        lineCount: text.split("\n").length,
+        sizeBytes,
+      };
+    }
+
+    case "structured": {
+      if (normalizedExt === ".xlsx") {
+        const wb = XLSX.read(inputBuffer, { type: "buffer" });
+        const sheetName = wb.SheetNames[0];
+        if (!sheetName) throw new Error("XLSX file contains no sheets.");
+        const ws = wb.Sheets[sheetName];
+        if (!ws) throw new Error("Could not read the first sheet from XLSX file.");
+        const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws);
+        const columns = rows.length > 0 ? Object.keys(rows[0] ?? {}) : [];
+        return { type: "data", format: "xlsx", rowCount: rows.length, columns, sizeBytes };
+      }
+
+      const content = inputBuffer.toString("utf-8");
+      let rows: Record<string, unknown>[] = [];
+      try {
+        rows = parseDataRows(content, ext);
+      } catch {
+        // Return minimal metadata if parsing fails — the file exists but may be malformed
+      }
+      const columns = rows.length > 0 ? Object.keys(rows[0] ?? {}) : [];
+      return {
+        type: "data",
+        format: normalizedExt.replace(".", ""),
+        rowCount: rows.length,
+        columns,
+        sizeBytes,
+      };
+    }
+
+    default:
+      break;
   }
 
   throw new Error(`Unsupported file type for inspection: ${ext}`);
