@@ -31,6 +31,13 @@ The server follows a family-based routing model:
 
 This policy is enforced before conversion work begins.
 
+## Testing
+
+- Run the full suite with `bun test`
+- The suite includes unit tests, integration tests, and live stdio MCP E2E tests
+- Generate coverage with `bun test --coverage`
+- Coverage is reported dynamically by Bun after the test run
+
 ## Supported Tooling
 
 ### `convert_file`
