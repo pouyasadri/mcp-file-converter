@@ -33,6 +33,16 @@ describe("MCP Tool Schema Validation", () => {
         expect(parsed.overwrite).toBe(true);
     });
 
+    test("should accept preview mode", () => {
+        const payload = {
+            inputPath: "/tmp/fake.png",
+            targetExtension: "webp",
+            preview: true
+        };
+        const parsed = ConvertFileSchema.parse(payload);
+        expect(parsed.preview).toBe(true);
+    });
+
     test("should reject invalid quality arguments", () => {
         const payload = {
             inputPath: "/tmp/fake.png",
