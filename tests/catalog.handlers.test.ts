@@ -30,7 +30,7 @@ describe("tool dispatcher handlers", () => {
           targetExtension: ".json",
         },
       })
-    ).rejects.toThrow("Cannot convert a image (.png) to a structured data (.json)");
+    ).rejects.toThrow("Cannot convert an image (.png) to a structured data (.json)");
 
     await unlink(inputPath);
   });
