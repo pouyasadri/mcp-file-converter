@@ -1,5 +1,7 @@
 import { test, expect, describe } from "bun:test";
 import { ConvertFileSchema, SuggestTargetsSchema } from "../src/types/index";
+import { BatchConvertSchema } from "../src/types/index";
+import { ImageConversionOptionsSchema } from "../src/converters/image";
 
 // A small unit test to just ensure the Zod schema natively validates the new parameters correctly
 // The actual server handler runs over stdio which is harder to mock in a simple bun test,
@@ -15,6 +17,12 @@ describe("MCP Tool Schema Validation", () => {
         expect(parsed.inputPath).toBe("/tmp/fake.png");
         expect(parsed.targetExtension).toBe("jpg");
         expect(parsed.overwrite).toBe(false);
+    });
+
+    test("should apply defaults for batch arguments", () => {
+        const parsed = BatchConvertSchema.parse({ inputPaths: ["/tmp/a.png"], targetExtension: ".webp" });
+        expect(parsed.overwrite).toBe(false);
+        expect(parsed.preview).toBe(false);
     });
 
     test("should accept advanced image arguments", () => {
@@ -60,5 +68,9 @@ describe("MCP Tool Schema Validation", () => {
     test("should accept suggest_targets schema by sourceExtension", () => {
         const parsed = SuggestTargetsSchema.parse({ sourceExtension: ".png" });
         expect(parsed.sourceExtension).toBe(".png");
+    });
+
+    test("should reject invalid image conversion dimensions", () => {
+        expect(() => ImageConversionOptionsSchema.parse({ width: 0 })).toThrow();
     });
 });
