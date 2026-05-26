@@ -87,6 +87,10 @@ export function getKindLabel(kind: Exclude<FileKind, "unsupported">): string {
   return "markup";
 }
 
+function getIndefiniteArticle(label: string): "a" | "an" {
+  return /^[aeiou]/i.test(label) ? "an" : "a";
+}
+
 export function getFamilyConversionError(sourceExt: string, targetExt: string): string {
   const sourceKind = getFileKind(sourceExt);
   const targetKind = getFileKind(targetExt);
@@ -102,8 +106,10 @@ export function getFamilyConversionError(sourceExt: string, targetExt: string): 
   }
 
   if (sourceKind !== targetKind) {
+    const sourceLabel = getKindLabel(sourceKind);
+    const targetLabel = getKindLabel(targetKind);
     return (
-      `Cannot convert a ${getKindLabel(sourceKind)} (${normalizedSource}) to a ${getKindLabel(targetKind)} (${normalizedTarget}). ` +
+      `Cannot convert ${getIndefiniteArticle(sourceLabel)} ${sourceLabel} (${normalizedSource}) to ${getIndefiniteArticle(targetLabel)} ${targetLabel} (${normalizedTarget}). ` +
       `Target must be one of: ${getSupportedExtensions(sourceKind).join(", ")}. ` +
       `${getSuggestedTargetMessage(sourceExt)}`
     );
