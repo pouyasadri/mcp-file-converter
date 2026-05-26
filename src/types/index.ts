@@ -24,3 +24,12 @@ export const BatchConvertSchema = z.object({
 });
 
 export type BatchConvertArgs = z.infer<typeof BatchConvertSchema>;
+
+export const SuggestTargetsSchema = z.object({
+  inputPath: z.string().optional().describe("Optional: absolute path to the source file"),
+  sourceExtension: z.string().optional().describe("Optional: source file extension (e.g. '.png', 'json')"),
+}).refine((value) => Boolean(value.inputPath || value.sourceExtension), {
+  message: "Either inputPath or sourceExtension must be provided",
+});
+
+export type SuggestTargetsArgs = z.infer<typeof SuggestTargetsSchema>;
