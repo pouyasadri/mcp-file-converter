@@ -1,7 +1,7 @@
 import { describe, test, expect } from "bun:test";
 import sharp from "sharp";
 import { batchConvert } from "../src/tools/batch";
-import { writeFile, unlink, readFile } from "fs/promises";
+import { writeFile, unlink, readFile, access } from "fs/promises";
 import { join } from "path";
 
 const TMP = "/tmp";
@@ -90,5 +90,27 @@ describe("batch_convert_files", () => {
     for (const r of result.results) {
       if (r.outputPath) await unlink(r.outputPath).catch(() => {});
     }
+  });
+
+  test("should preview batch output paths without writing files", async () => {
+    const p1 = await createTmpPng("batch_preview1.png");
+    const p2 = await createTmpPng("batch_preview2.png");
+
+    const result = await batchConvert({
+      inputPaths: [p1, p2],
+      targetExtension: ".webp",
+      overwrite: false,
+      preview: true,
+    });
+
+    expect(result.succeeded).toBe(2);
+    expect(result.results[0]?.outputPath).toBe("/tmp/batch_preview1.webp");
+    expect(result.results[1]?.outputPath).toBe("/tmp/batch_preview2.webp");
+
+    await expect(access("/tmp/batch_preview1.webp")).rejects.toThrow();
+    await expect(access("/tmp/batch_preview2.webp")).rejects.toThrow();
+
+    await unlink(p1);
+    await unlink(p2);
   });
 });

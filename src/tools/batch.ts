@@ -1,5 +1,5 @@
 import { readFile, writeFile, access } from "fs/promises";
-import { extname, join, dirname, basename } from "path";
+import { extname } from "path";
 import { convertImage } from "../converters/image.js";
 import { convertData } from "../converters/data.js";
 import type { BatchConvertArgs } from "../types/index.js";
@@ -8,6 +8,7 @@ import {
   getFileKind,
   normalizeExtension,
 } from "./routing.js";
+import { buildOutputPath } from "./preview.js";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -30,7 +31,7 @@ export interface BatchConvertResult {
 // ── Main export ───────────────────────────────────────────────────────────────
 
 export async function batchConvert(args: BatchConvertArgs): Promise<BatchConvertResult> {
-  const { inputPaths, targetExtension, overwrite, width, height, quality } = args;
+  const { inputPaths, targetExtension, overwrite, preview, width, height, quality } = args;
 
   const normalizedTargetExt = normalizeExtension(targetExtension);
 
@@ -55,6 +56,12 @@ export async function batchConvert(args: BatchConvertArgs): Promise<BatchConvert
         throw new Error(conversionError);
       }
 
+      const outputPath = buildOutputPath(inputPath, sourceExt, normalizedTargetExt, overwrite);
+
+      if (preview) {
+        return { inputPath, status: "success", outputPath };
+      }
+
       const inputBuffer = await readFile(inputPath);
       let outputData: Buffer | string;
 
@@ -63,11 +70,6 @@ export async function batchConvert(args: BatchConvertArgs): Promise<BatchConvert
       } else {
         outputData = await convertData(inputBuffer, sourceExt, normalizedTargetExt);
       }
-
-      const fileName = basename(inputPath, sourceExt);
-      const outputPath = overwrite
-        ? inputPath
-        : join(dirname(inputPath), `${fileName}${normalizedTargetExt}`);
 
       await writeFile(outputPath, outputData);
       return { inputPath, status: "success", outputPath };
