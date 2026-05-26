@@ -1,5 +1,5 @@
 import { test, expect, describe } from "bun:test";
-import { ConvertFileSchema } from "../src/types/index";
+import { ConvertFileSchema, SuggestTargetsSchema } from "../src/types/index";
 
 // A small unit test to just ensure the Zod schema natively validates the new parameters correctly
 // The actual server handler runs over stdio which is harder to mock in a simple bun test,
@@ -50,5 +50,15 @@ describe("MCP Tool Schema Validation", () => {
             quality: 150 // Out of bounds (1-100)
         };
         expect(() => ConvertFileSchema.parse(payload)).toThrow();
+    });
+
+    test("should accept suggest_targets schema by inputPath", () => {
+        const parsed = SuggestTargetsSchema.parse({ inputPath: "/tmp/file.png" });
+        expect(parsed.inputPath).toBe("/tmp/file.png");
+    });
+
+    test("should accept suggest_targets schema by sourceExtension", () => {
+        const parsed = SuggestTargetsSchema.parse({ sourceExtension: ".png" });
+        expect(parsed.sourceExtension).toBe(".png");
     });
 });
