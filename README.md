@@ -97,6 +97,19 @@ Behavior:
 - uses the shared routing layer
 - returns a structured response with `sourceKind`, `suggestedTargets`, and a message
 
+### `discover_capabilities`
+
+Return a structured snapshot of the server capabilities.
+
+Returned data includes:
+
+- server metadata
+- supported file families and extensions
+- suggested targets per family
+- available tools
+- feature flags
+- provenance support
+
 ### `extract_pdf`
 
 Extract plain text from a PDF buffer.
@@ -219,6 +232,8 @@ The model also separates concerns cleanly:
 
 This structure makes the server easier to extend without spreading format-specific rules across handlers.
 
+The capability discovery tool is backed by the same registry used by tool listing and dispatch. It provides a machine-readable summary for clients that want to inspect server behavior before calling a tool.
+
 ## Preview Mode
 
 Preview mode is supported by conversion tools.
@@ -239,6 +254,21 @@ The server uses shared formatters to keep tool output consistent:
 - `formatBatchConversionMessage()` for batch conversions
 
 This avoids formatting drift between tool handlers and keeps responses stable for agents.
+
+## Provenance
+
+Successful conversions return a manifest in the structured success payload.
+
+The manifest includes:
+
+- source and target file snapshots
+- extensions
+- file families
+- file sizes
+- SHA-256 hashes
+- start and completion timestamps
+
+This is useful for auditing, idempotency checks, and downstream automation.
 
 ## File Families
 
@@ -288,6 +318,7 @@ Invalid conversion attempts return suggestions in the error response.
 - image dimensions are bounded to avoid oversized input abuse
 - overwrite is opt-in
 - preview mode can be used to validate output paths before writing
+- successful conversions include provenance metadata
 - all file operations are local to the machine running the server
 
 ## Development
