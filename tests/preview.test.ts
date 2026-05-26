@@ -3,6 +3,7 @@ import sharp from "sharp";
 import { writeFile, unlink, access } from "fs/promises";
 import { join } from "path";
 import { batchConvert } from "../src/tools/batch";
+import { buildConversionPreview } from "../src/tools/preview";
 
 const TMP = "/tmp";
 
@@ -16,6 +17,14 @@ async function createTmpPng(name: string): Promise<string> {
 }
 
 describe("preview mode", () => {
+  test("should build a structured preview payload", () => {
+    const preview = buildConversionPreview("/tmp/demo.png", ".png", ".webp", false);
+    expect(preview.sourceKind).toBe("image");
+    expect(preview.targetKind).toBe("image");
+    expect(preview.outputPath).toBe("/tmp/demo.webp");
+    expect(preview.suggestedTargets).toContain(".webp");
+  });
+
   test("should return planned batch output path without writing files", async () => {
     const src = await createTmpPng("single_preview.png");
 
