@@ -1,9 +1,4 @@
 import sharp from "sharp";
-import { parse as parseCsv } from "csv-parse/sync";
-import YAML from "yaml";
-import * as TOML from "smol-toml";
-import * as XLSX from "xlsx";
-import { XMLParser } from "fast-xml-parser";
 import { readFile } from "fs/promises";
 import { extname } from "path";
 import {
@@ -11,6 +6,7 @@ import {
   getSuggestedTargetExtensions,
   normalizeExtension,
 } from "./routing.js";
+import { extractStructuredRows } from "../structured.js";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -47,43 +43,6 @@ export interface MarkupMetadata {
 export type FileMetadata = ImageMetadata | DataMetadata | MarkupMetadata;
 
 // ── Extension sets ────────────────────────────────────────────────────────────
-
-// ── Internal helper: parse text-based data files into row arrays ──────────────
-
-function parseDataRows(content: string, ext: string): Record<string, unknown>[] {
-  switch (ext) {
-    case ".json": {
-      const parsed = JSON.parse(content) as unknown;
-      return Array.isArray(parsed)
-        ? (parsed as Record<string, unknown>[])
-        : [parsed as Record<string, unknown>];
-    }
-    case ".yaml":
-    case ".yml": {
-      const data = YAML.parse(content) as unknown;
-      return Array.isArray(data)
-        ? (data as Record<string, unknown>[])
-        : [data as Record<string, unknown>];
-    }
-    case ".csv":
-      return parseCsv(content, { columns: true }) as Record<string, unknown>[];
-    case ".toml": {
-      const data = TOML.parse(content) as unknown;
-      return Array.isArray(data)
-        ? (data as Record<string, unknown>[])
-        : [data as Record<string, unknown>];
-    }
-    case ".xml": {
-      const parser = new XMLParser({ ignoreAttributes: false });
-      const data = parser.parse(content) as unknown;
-      return Array.isArray(data)
-        ? (data as Record<string, unknown>[])
-        : [data as Record<string, unknown>];
-    }
-    default:
-      return [];
-  }
-}
 
 // ── Main export ───────────────────────────────────────────────────────────────
 
@@ -123,28 +82,9 @@ export async function inspectFile(inputPath: string): Promise<FileMetadata> {
     }
 
     case "structured": {
-      if (normalizedExt === ".xlsx") {
-        const wb = XLSX.read(inputBuffer, { type: "buffer" });
-        const sheetName = wb.SheetNames[0];
-        if (!sheetName) throw new Error("XLSX file contains no sheets.");
-        const ws = wb.Sheets[sheetName];
-        if (!ws) throw new Error("Could not read the first sheet from XLSX file.");
-        const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws);
-        const columns = rows.length > 0 ? Object.keys(rows[0] ?? {}) : [];
-        return {
-          type: "data",
-          format: "xlsx",
-          rowCount: rows.length,
-          columns,
-          sizeBytes,
-          suggestedTargets: getSuggestedTargetExtensions("structured"),
-        };
-      }
-
-      const content = inputBuffer.toString("utf-8");
       let rows: Record<string, unknown>[] = [];
       try {
-        rows = parseDataRows(content, ext);
+        rows = extractStructuredRows(inputBuffer, ext);
       } catch {
         // Return minimal metadata if parsing fails — the file exists but may be malformed
       }

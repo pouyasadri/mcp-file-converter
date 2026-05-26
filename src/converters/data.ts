@@ -1,46 +1,14 @@
-import { parse as parseCsv } from "csv-parse/sync";
 import { stringify as stringifyCsv } from "csv-stringify/sync";
 import YAML from "yaml";
 import { marked } from "marked";
 import TurndownService from "turndown";
 import * as XLSX from "xlsx";
 import * as TOML from "smol-toml";
-import { XMLParser, XMLBuilder } from "fast-xml-parser";
-
-// Canonical type for parsed structured data across all supported formats
-type ParsedData = Record<string, unknown>[] | Record<string, unknown>;
-
-// Parsers return ParsedData for structured formats, or a raw string for markup formats (MD/HTML)
-type DataParser = (content: string | Buffer) => ParsedData | string;
+import { XMLBuilder } from "fast-xml-parser";
+import { parseStructuredData, type StructuredData } from "../structured.js";
 
 // Stringifiers produce either a UTF-8 string or a binary Buffer (e.g. XLSX)
-type DataStringifier = (data: ParsedData | string) => Buffer | string;
-
-const parsers: Record<string, DataParser> = {
-  ".json": (content) => JSON.parse(content as string) as ParsedData,
-  ".yaml": (content) => YAML.parse(content as string) as ParsedData,
-  ".yml": (content) => YAML.parse(content as string) as ParsedData,
-  ".csv": (content) => parseCsv(content as string, { columns: true }) as ParsedData,
-  // Markup formats — raw string pass-through; conversion happens in the stringifier
-  ".md": (content) => content as string,
-  ".html": (content) => content as string,
-  // XLSX is binary: parse from buffer to JSON rows
-  ".xlsx": (_content, buffer?: Buffer) => {
-    const wb = XLSX.read(buffer ?? Buffer.from(_content as string, "binary"), { type: "buffer" });
-    const sheetName = wb.SheetNames[0];
-    if (!sheetName) throw new Error("XLSX file contains no sheets.");
-    const ws = wb.Sheets[sheetName];
-    if (!ws) throw new Error("Could not read the first sheet from XLSX file.");
-    return XLSX.utils.sheet_to_json<Record<string, unknown>>(ws);
-  },
-  // TOML — human-readable config format popular in Rust/Python ecosystems
-  ".toml": (content) => TOML.parse(content as string) as ParsedData,
-  // XML — parsed to a JS object; ignoreAttributes=false preserves XML attributes
-  ".xml": (content) => {
-    const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: "@_" });
-    return parser.parse(content as string) as ParsedData;
-  },
-};
+type DataStringifier = (data: StructuredData | string) => Buffer | string;
 
 const turndown = new TurndownService({ headingStyle: "atx" });
 
@@ -83,20 +51,21 @@ export async function convertData(
   const srcExt = sourceExt.toLowerCase();
   const tgtExt = targetExt.toLowerCase();
 
+  const structuredExtensions = new Set([".json", ".yaml", ".yml", ".csv", ".xlsx", ".toml", ".xml"]);
+  const markupExtensions = new Set([".md", ".html"]);
+
   // 1. Parsing Phase
-  const parser = parsers[srcExt];
-  if (!parser) {
+  if (!structuredExtensions.has(srcExt) && !markupExtensions.has(srcExt)) {
     throw new Error(`Unsupported source data extension: ${sourceExt}`);
   }
 
-  let parsedData: ParsedData | string;
+  let parsedData: StructuredData | string;
 
   try {
-    // XLSX parser requires the raw buffer; all others use the UTF-8 string
-    if (srcExt === ".xlsx") {
-      parsedData = (parsers[".xlsx"] as (c: string, b: Buffer) => ParsedData)("", inputBuffer);
+    if (structuredExtensions.has(srcExt)) {
+      parsedData = parseStructuredData(inputBuffer, srcExt);
     } else {
-      parsedData = parser(inputBuffer.toString("utf-8"));
+      parsedData = inputBuffer.toString("utf-8");
     }
   } catch (error: any) {
     throw new Error(`Failed to parse ${sourceExt} file: ${error.message}`);

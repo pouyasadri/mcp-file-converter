@@ -1,7 +1,6 @@
 import sharp from "sharp";
 import { z } from "zod";
-
-const MAX_IMAGE_DIMENSION = 16384;
+import { MAX_IMAGE_DIMENSION } from "../constants.js";
 
 export const ImageConversionOptionsSchema = z.object({
   width: z.number().int().min(1).max(MAX_IMAGE_DIMENSION).optional(),
