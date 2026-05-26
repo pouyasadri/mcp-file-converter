@@ -4,7 +4,7 @@ import {
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import { readFile, writeFile, access } from "fs/promises";
-import { extname, join, dirname, basename } from "path";
+import { extname } from "path";
 import { ConvertFileSchema, BatchConvertSchema } from "./types/index.js";
 import { convertImage } from "./converters/image.js";
 import { convertData } from "./converters/data.js";
@@ -12,6 +12,7 @@ import { extractPdfText } from "./tools/pdf.js";
 import { inspectFile } from "./tools/inspect.js";
 import { compressFile, decompressFile } from "./tools/compress.js";
 import { batchConvert } from "./tools/batch.js";
+import { buildOutputPath } from "./tools/preview.js";
 import {
   getFamilyConversionError,
   getFileKind,
@@ -40,6 +41,7 @@ mcpServer.server.setRequestHandler(ListToolsRequestSchema, async () => ({
           inputPath:       { type: "string",  description: "Absolute path to the source file" },
           targetExtension: { type: "string",  description: "Target extension e.g. '.webp', '.json', '.toml', '.xml'" },
           overwrite:       { type: "boolean", description: "Overwrite original file (default: false = create a copy)" },
+          preview:         { type: "boolean", description: "Preview the output path without writing a file" },
           width:           { type: "integer", description: "Image resize width (image files only)" },
           height:          { type: "integer", description: "Image resize height (image files only)" },
           quality:         { type: "integer", description: "Image output quality 1–100 (image files only)" },
@@ -58,6 +60,7 @@ mcpServer.server.setRequestHandler(ListToolsRequestSchema, async () => ({
           inputPaths:      { type: "array", items: { type: "string" }, description: "Array of absolute file paths" },
           targetExtension: { type: "string",  description: "Target extension for all files" },
           overwrite:       { type: "boolean", description: "Overwrite originals (default: false)" },
+          preview:         { type: "boolean", description: "Preview output paths without writing files" },
           width:           { type: "integer", description: "Image resize width (image files only)" },
           height:          { type: "integer", description: "Image resize height (image files only)" },
           quality:         { type: "integer", description: "Image quality 1–100 (image files only)" },
@@ -203,11 +206,11 @@ mcpServer.server.setRequestHandler(CallToolRequestSchema, async (request) => {
   }
 
   // ── batch_convert_files ──────────────────────────────────────────────────────
-  if (toolName === "batch_convert_files") {
-    try {
-      const args = BatchConvertSchema.parse(request.params.arguments);
-      const result = await batchConvert(args);
-      const lines = result.results.map((r) =>
+    if (toolName === "batch_convert_files") {
+      try {
+        const args = BatchConvertSchema.parse(request.params.arguments);
+        const result = await batchConvert(args);
+        const lines = result.results.map((r) =>
         r.status === "success"
           ? `✅ ${r.inputPath} → ${r.outputPath}`
           : `❌ ${r.inputPath}: ${r.error}`
@@ -225,8 +228,8 @@ mcpServer.server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
   // ── convert_file ─────────────────────────────────────────────────────────────
   if (toolName === "convert_file") {
-    try {
-      const { inputPath, targetExtension, overwrite, width, height, quality } =
+      try {
+      const { inputPath, targetExtension, overwrite, preview, width, height, quality } =
         ConvertFileSchema.parse(request.params.arguments);
 
       const sourceExt = extname(inputPath);
@@ -237,12 +240,31 @@ mcpServer.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       await assertFileExists(inputPath);
-      const inputBuffer = await readFile(inputPath);
 
       const conversionError = getFamilyConversionError(sourceExt, normalizedTargetExt);
       if (conversionError) {
         throw new Error(conversionError);
       }
+
+      const outputPath = buildOutputPath(inputPath, sourceExt, normalizedTargetExt, overwrite);
+
+      if (preview) {
+        return {
+          content: [{
+            type: "text",
+            text: JSON.stringify({
+              preview: true,
+              inputPath,
+              sourceExtension: sourceExt,
+              targetExtension: normalizedTargetExt,
+              outputPath,
+              overwrite,
+            }, null, 2),
+          }],
+        };
+      }
+
+      const inputBuffer = await readFile(inputPath);
 
       let outputData: Buffer | string;
       if (getFileKind(sourceExt) === "image") {
@@ -250,11 +272,6 @@ mcpServer.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       } else {
         outputData = await convertData(inputBuffer, sourceExt, normalizedTargetExt);
       }
-
-      const fileName = basename(inputPath, sourceExt);
-      const outputPath = overwrite
-        ? inputPath
-        : join(dirname(inputPath), `${fileName}${normalizedTargetExt}`);
 
       await writeFile(outputPath, outputData);
 
