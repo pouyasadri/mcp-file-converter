@@ -35,7 +35,8 @@ mcpServer.server.setRequestHandler(ListToolsRequestSchema, async () => ({
       description:
         "Convert a single file to another format. Supports: Images (PNG/JPG/WebP/AVIF/TIFF), " +
         "Data (JSON/YAML/CSV/XLSX/TOML/XML), and Markup (Markdown/HTML). " +
-        "Optional image params: width, height, quality.",
+        "Optional image params: width, height, quality. " +
+        "Use preview=true to return the planned output path and suggested targets without writing a file.",
       inputSchema: {
         type: "object",
         properties: {
@@ -54,7 +55,8 @@ mcpServer.server.setRequestHandler(ListToolsRequestSchema, async () => ({
       name: "batch_convert_files",
       description:
         "Convert multiple files to the same target format in parallel. " +
-        "Returns a per-file success/failure report.",
+        "Returns a per-file success/failure report. " +
+        "Use preview=true to return planned output paths without writing files.",
       inputSchema: {
         type: "object",
         properties: {
@@ -74,7 +76,8 @@ mcpServer.server.setRequestHandler(ListToolsRequestSchema, async () => ({
       description:
         "Return metadata about a file without modifying it. " +
         "Images: format, dimensions, color space. Data files: row count, column names. " +
-        "Markup files: character count, line count.",
+        "Markup files: character count, line count. " +
+        "Includes suggested target formats for the detected file family.",
       inputSchema: {
         type: "object",
         properties: {
