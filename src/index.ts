@@ -13,6 +13,12 @@ import { inspectFile } from "./tools/inspect.js";
 import { compressFile, decompressFile } from "./tools/compress.js";
 import { batchConvert } from "./tools/batch.js";
 import { buildConversionPreview, buildOutputPath } from "./tools/preview.js";
+import { suggestTargets } from "./tools/suggest.js";
+import {
+  formatBatchConversionMessage,
+  formatConversionSuccessMessage,
+  formatJsonResponse,
+} from "./tools/response.js";
 import {
   getFamilyConversionError,
   getFileKind,
@@ -87,6 +93,23 @@ mcpServer.server.setRequestHandler(ListToolsRequestSchema, async () => ({
       },
     },
     {
+      name: "suggest_targets",
+      description:
+        "Suggest valid conversion targets for a file family. " +
+        "Provide inputPath or sourceExtension to get recommended target formats.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          inputPath: { type: "string", description: "Optional: absolute path to the file to analyze" },
+          sourceExtension: { type: "string", description: "Optional: file extension like '.png' or 'json'" },
+        },
+        oneOf: [
+          { required: ["inputPath"] },
+          { required: ["sourceExtension"] },
+        ],
+      },
+    },
+    {
       name: "extract_pdf",
       description:
         "Extract all text content from a PDF file and return it as plain text. " +
@@ -155,6 +178,27 @@ mcpServer.server.setRequestHandler(CallToolRequestSchema, async (request) => {
   }
 
   // ── extract_pdf ──────────────────────────────────────────────────────────────
+  if (toolName === "suggest_targets") {
+    try {
+      const inputPath = request.params.arguments?.inputPath ? String(request.params.arguments.inputPath) : undefined;
+      const sourceExtension = request.params.arguments?.sourceExtension ? String(request.params.arguments.sourceExtension) : undefined;
+
+      if (!inputPath && !sourceExtension) {
+        throw new Error("Provide inputPath or sourceExtension.");
+      }
+
+      if (inputPath) {
+        await assertFileExists(inputPath);
+      }
+
+      const result = await suggestTargets({ inputPath, sourceExtension });
+      return { content: [{ type: "text", text: formatJsonResponse(result) }] };
+    } catch (error: any) {
+      return { content: [{ type: "text", text: `Error suggesting targets: ${error.message}` }], isError: true };
+    }
+  }
+
+  // ── extract_pdf ──────────────────────────────────────────────────────────────
   if (toolName === "extract_pdf") {
     try {
       const inputPath = String(request.params.arguments?.inputPath ?? "");
@@ -213,16 +257,11 @@ mcpServer.server.setRequestHandler(CallToolRequestSchema, async (request) => {
     if (toolName === "batch_convert_files") {
       try {
         const args = BatchConvertSchema.parse(request.params.arguments);
-        const result = await batchConvert(args);
-        const lines = result.results.map((r) =>
-        r.status === "success"
-          ? `✅ ${r.inputPath} → ${r.outputPath}`
-          : `❌ ${r.inputPath}: ${r.error}`
-      );
+      const result = await batchConvert(args);
       return {
         content: [{
           type: "text",
-          text: `Batch conversion complete: ${result.succeeded}/${result.total} succeeded.\n\n${lines.join("\n")}`,
+          text: formatBatchConversionMessage(result),
         }],
       };
     } catch (error: any) {
@@ -262,7 +301,7 @@ mcpServer.server.setRequestHandler(CallToolRequestSchema, async (request) => {
         return {
           content: [{
             type: "text",
-            text: JSON.stringify(conversionPreview, null, 2),
+            text: formatJsonResponse(conversionPreview),
           }],
         };
       }
@@ -281,7 +320,11 @@ mcpServer.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       return {
         content: [{
           type: "text",
-          text: `Successfully converted ${inputPath} to ${normalizedTargetExt}. Output saved to: ${outputPath}`,
+          text: formatConversionSuccessMessage({
+            inputPath,
+            targetExtension: normalizedTargetExt,
+            outputPath,
+          }),
         }],
       };
     } catch (error: any) {
